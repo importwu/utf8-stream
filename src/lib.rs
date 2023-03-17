@@ -7,4 +7,4 @@ pub use error::{
 
 mod stream;
 
-pub use stream::Utf8Stream;
+pub use stream::Stream;

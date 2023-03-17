@@ -8,12 +8,12 @@ use crate::{
     Utf8Error
 };
 
-pub struct Utf8Stream<R> {
+pub struct Stream<R> {
     bytes: Bytes<R>,
     buf: Option<u8>
 }
 
-impl <R: Read> Utf8Stream<R> {
+impl <R: Read> Stream<R> {
     pub fn new(reader: R) -> Self {
         Self {
             bytes: reader.bytes(),
@@ -22,7 +22,7 @@ impl <R: Read> Utf8Stream<R> {
     }
 }
 
-impl<R: Read> Iterator for Utf8Stream<R> {
+impl<R: Read> Iterator for Stream<R> {
     type Item = Result<char, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -147,7 +147,7 @@ use super::*;
 
 #[test]
     fn test() {
-        let stream = Utf8Stream::new(b"Hello \xF0\x90\x80World".as_slice());
+        let stream = Stream::new(b"Hello \xF0\x90\x80World".as_slice());
 
         let mut stream = stream
             .map(|r| match r {
