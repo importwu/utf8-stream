@@ -81,7 +81,7 @@ impl<R: Read> Iterator for Stream<R> {
                     | (0xE1..=0xEC, 0x80..=0xBF)
                     | (0xED, 0x80..=0x9F)
                     | (0xEE..=0xEF, 0x80..=0xBF) => {
-                        
+
                         store!(y);
 
                         let code_point = acc_cont_byte((x & 0xF) as u32, y);
@@ -146,7 +146,7 @@ mod test {
 
 use super::*;
 
-#[test]
+    #[test]
     fn test() {
         let stream = Stream::new(b"Hello \xF0\x90\x80World".as_slice());
 

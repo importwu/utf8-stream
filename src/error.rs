@@ -4,7 +4,7 @@ use std::{
     error
 };
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Utf8Error {
     pub(crate) err_len: u8,
     pub(crate) bytes: [u8; 3]
@@ -14,15 +14,6 @@ impl Utf8Error {
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         &self.bytes[0..self.err_len as usize]
-    }
-}
-
-impl fmt::Debug for Utf8Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Utf8Error")
-            .field("err_len", &self.err_len)
-            .field("bytes", &&self.bytes[0..self.err_len as usize])
-            .finish()
     }
 }
 
