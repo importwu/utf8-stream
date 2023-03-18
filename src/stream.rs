@@ -8,6 +8,7 @@ use crate::{
     Utf8Error
 };
 
+#[derive(Debug)]
 pub struct Stream<R> {
     bytes: Bytes<R>,
     buf: Option<u8>
