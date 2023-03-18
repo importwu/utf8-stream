@@ -27,15 +27,14 @@ impl<R: Read> Iterator for Stream<R> {
 
     fn next(&mut self) -> Option<Self::Item> {
 
-        let mut repr = [0u8; 4];
+        let mut bytes = [0u8; 3];
         let mut index = 0;
 
         macro_rules! store {
             ($b: expr) => {
                 {
+                    bytes[index] = $b;
                     index += 1;
-                    repr[0] = index as u8;
-                    repr[index] = $b;
                 }
             };
         }
@@ -45,7 +44,7 @@ impl<R: Read> Iterator for Stream<R> {
                 match self.bytes.next() {
                     Some(Ok(b)) => b,
                     Some(Err(e)) => return Some(Err(Error::IoError(e))),
-                    None => return Some(Err(Error::Utf8Error(Utf8Error {repr})))
+                    None => return Some(Err(Error::Utf8Error(Utf8Error {err_len: index  as u8, bytes})))
                 }
             };
         }
@@ -73,6 +72,7 @@ impl<R: Read> Iterator for Stream<R> {
                 let y = next!();
                 match (x, y) {
                     (0xC2..=0xDF, 0x80..=0xBF) => {
+
                         let code_point = acc_cont_byte((x & 0x1F) as u32, y);
 
                         Some(Ok(unsafe {char::from_u32_unchecked(code_point)}))
@@ -81,6 +81,7 @@ impl<R: Read> Iterator for Stream<R> {
                     | (0xE1..=0xEC, 0x80..=0xBF)
                     | (0xED, 0x80..=0x9F)
                     | (0xEE..=0xEF, 0x80..=0xBF) => {
+                        
                         store!(y);
 
                         let code_point = acc_cont_byte((x & 0xF) as u32, y);
@@ -89,7 +90,7 @@ impl<R: Read> Iterator for Stream<R> {
                         
                         if z < 0x80 || z > 0xBF {
                             self.buf = Some(z);
-                            return Some(Err(Error::Utf8Error(Utf8Error {repr})))
+                            return Some(Err(Error::Utf8Error(Utf8Error {err_len: index  as u8, bytes})))
                         }
 
                         let code_point = acc_cont_byte(code_point, z);
@@ -108,7 +109,7 @@ impl<R: Read> Iterator for Stream<R> {
                         
                         if z < 0x80 || z > 0xBF {
                             self.buf = Some(z);
-                            return Some(Err(Error::Utf8Error(Utf8Error {repr})))
+                            return Some(Err(Error::Utf8Error(Utf8Error {err_len: index  as u8, bytes})))
                         }
                         
                         store!(z);
@@ -119,7 +120,7 @@ impl<R: Read> Iterator for Stream<R> {
 
                         if w < 0x80 || w > 0xBF {
                             self.buf = Some(w);
-                            return Some(Err(Error::Utf8Error(Utf8Error {repr})))
+                            return Some(Err(Error::Utf8Error(Utf8Error {err_len: index  as u8, bytes})))
                         }
 
                         let code_point = acc_cont_byte(code_point, w);
@@ -128,11 +129,11 @@ impl<R: Read> Iterator for Stream<R> {
                     }
                     _ => {
                         self.buf = Some(y);
-                        return Some(Err(Error::Utf8Error(Utf8Error {repr})))
+                        return Some(Err(Error::Utf8Error(Utf8Error {err_len: index  as u8, bytes})))
                     }
                 }
             }
-            _ => Some(Err(Error::Utf8Error(Utf8Error {repr})))
+            _ => Some(Err(Error::Utf8Error(Utf8Error {err_len: index  as u8, bytes})))
         }
     }
 }
@@ -162,7 +163,7 @@ use super::*;
         assert_eq!(stream.next(), Some(Ok('l')));
         assert_eq!(stream.next(), Some(Ok('o')));
         assert_eq!(stream.next(), Some(Ok(' ')));
-        assert_eq!(stream.next(), Some(Err(Utf8Error { repr: [3, 0xF0, 0x90, 0x80] })));
+        assert_eq!(stream.next(), Some(Err(Utf8Error { err_len: 3, bytes: [0xF0, 0x90, 0x80] })));
         assert_eq!(stream.next(), Some(Ok('W')));
         assert_eq!(stream.next(), Some(Ok('o')));
         assert_eq!(stream.next(), Some(Ok('r')));

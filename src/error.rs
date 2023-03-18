@@ -6,23 +6,22 @@ use std::{
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Utf8Error {
-    pub(crate) repr: [u8; 4]   //[len, code, code, code]
+    pub(crate) err_len: u8,
+    pub(crate) bytes: [u8; 3]
 }
 
 impl Utf8Error {
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        let end = self.repr[0] as usize + 1;
-        &self.repr[1..end]
+        &self.bytes[0..self.err_len as usize]
     }
 }
 
 impl fmt::Debug for Utf8Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let end = self.repr[0] as usize + 1;
         f.debug_struct("Utf8Error")
-            .field("err_len", &self.repr[0])
-            .field("invalid_sequence", &&self.repr[1..end])
+            .field("err_len", &self.err_len)
+            .field("bytes", &&self.bytes[0..self.err_len as usize])
             .finish()
     }
 }
@@ -30,10 +29,10 @@ impl fmt::Debug for Utf8Error {
 
 impl fmt::Display for Utf8Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self.repr[0] {
-            1 => write!(f, "invalid utf-8 sequence [0x{:x}]", self.repr[1]),
-            2 => write!(f, "invalid utf-8 sequence [0x{:x}, 0x{:x}]", self.repr[1], self.repr[2]),
-            3 => write!(f, "invalid utf-8 sequence [0x{:x}, 0x{:x}, 0x{:x}]", self.repr[1], self.repr[2], self.repr[3]),
+        match self.err_len {
+            1 => write!(f, "invalid utf-8 sequence [0x{:x}]", self.bytes[0]),
+            2 => write!(f, "invalid utf-8 sequence [0x{:x}, 0x{:x}]", self.bytes[0], self.bytes[1]),
+            3 => write!(f, "invalid utf-8 sequence [0x{:x}, 0x{:x}, 0x{:x}]", self.bytes[0], self.bytes[1], self.bytes[2]),
             _ => unreachable!()
         }
     }
