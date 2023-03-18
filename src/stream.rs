@@ -172,4 +172,6 @@ use super::*;
         assert_eq!(stream.next(), Some(Ok('d')));
         assert_eq!(stream.next(), None);
     }
+
 }
+

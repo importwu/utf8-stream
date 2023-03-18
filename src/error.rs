@@ -54,3 +54,15 @@ impl error::Error for Error {
         }
     }
 }
+
+impl From<Utf8Error> for Error {
+    fn from(e: Utf8Error) -> Self {
+        Self::Utf8Error(e)
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(e: io::Error) -> Self {
+        Self::IoError(e)
+    }
+}
